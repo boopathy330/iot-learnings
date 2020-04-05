@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <Link type="text/css" rel="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.css"></Link>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript">
+      window.onload = async function () {
+        var temperatureData = [];
+        var label = [];
+        var humidityData = [];
+
+        var url = "http://localhost:3000/roomLevel";
+      await $.ajax({
+          url: url,
+          type: "GET",
+          dataType: "json",
+          success: function (data) {
+            temperatureData = data.map(ele=>ele.temperature);
+            label = data.map(ele=>ele.created_time);
+            humidityData = data.map(ele=>ele.humidity);
+            return data;
+          },
+        });
+        var ctx = document.getElementById("myChart").getContext("2d");
+        var myChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: [...label],
+            datasets: [
+              {
+                label: "Temperature",
+                data: [...temperatureData],
+                backgroundColor: [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(54, 162, 235, 0.2)' ]
+              },
+              {
+                label: "humidity",
+                data: [...humidityData]
+              },
+            ],
+          },
+          options: {
+            scales: {
+              yAxes: [
+                {
+                  ticks: {
+                    beginAtZero: true,
+                  },
+                },
+              ],
+            },
+          },
+        });
+      };
+    </script>
+  </head>
+  <body>
+      <div style="margin-top: 10%;">
+        <canvas id="myChart" width="200" height="100"></canvas>
+      </div>
+    <div style="margin-top: 10%;">
+        <canvas id="myChart1" width="200" height="100"></canvas>
+    </div>
+    
+    <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+  </body>
+</html>
