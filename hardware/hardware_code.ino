@@ -9,25 +9,21 @@
 
 #define DHTTYPE DHT11
 
-DHT dht(DHTPIN,DHTTYPE);
-
+DHT dht(DHTPIN, DHTTYPE);
 
 float humidityData;
 float temperatureData;
 
-
-const char* ssid = "ACT";// 
-const char* password = "8056563551";
+const char *ssid = "ACT"; //
+const char *password = "8056563551";
 //WiFiClient client;
-char server[] = "192.168.0.104";   //eg: 192.168.0.222
+char server[] = "192.168.0.102"; //eg: 192.168.0.222
 
-
-WiFiClient client;    
-
+client;
 
 void setup()
 {
- Serial.begin(9600);
+  Serial.begin(9600);
   delay(10);
   dht.begin();
   // Connect to WiFi network
@@ -35,54 +31,49 @@ void setup()
   Serial.println();
   Serial.print("Connecting to ");
   Serial.println(ssid);
- 
+
   WiFi.begin(ssid, password); //connect to wifi router
- //wait for connection
+                              //wait for connection
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
     Serial.print(".");
   }
-  ////If connection successful show IP address in serial monitor 
+  ////If connection successful show IP address in serial monitor
   Serial.println("");
   Serial.println("WiFi connected");
- 
+
   // Start the server
   //server.begin();
   Serial.println("Server started");
   Serial.print(WiFi.localIP());
   delay(1000);
   Serial.println("connecting...");
- }
+}
 void loop()
-{ 
+{
   humidityData = dht.readHumidity();
-  temperatureData = dht.readTemperature(); 
-  Sending_To_phpmyadmindatabase(); 
+  temperatureData = dht.readTemperature();
+  sendingDataToBackend();
   delay(30000); // interval
- }
+}
 
- void Sending_To_phpmyadmindatabase()   //CONNECTING WITH MYSQL
- {
-   if (client.connect(server, 80)) {
-    Serial.println("connected");
-    // Make a HTTP request:
-    Serial.print("GET /dht11/dht11.php?humidity=");
-    client.print("GET /dht11/dht11.php?humidity=");     //YOUR URL
-    Serial.println(humidityData);
-    client.print(humidityData);
-    client.print("&temperature=");
-    Serial.println("&temperature=");
-    client.print(temperatureData);
-    Serial.println(temperatureData);
-    client.print(" ");      //SPACE BEFORE HTTP/1.1
-    client.print("HTTP/1.1");
-    client.println();
-    client.println("Host: Your Local IP");
-    client.println("Connection: close");
-    client.println();
-  } else {
-    // if you didn't get a connection to the server:
-    Serial.println("connection failed");
-  }
- }
+void sendingDataToBackend() //CONNECTING WITH MYSQL
+{
+  DynamicJsonBuffer jb;
+  JsonVariant bodyJson = jb.createObject();
+  bodyJson["id"] = 1231;
+  bodyJson["temperature"] = temperatureData;
+  bodyJson["humidity"] = humidityData;
+  String bodyString = "";
+  bodyJson.printTo(bodyString);
+  HTTPClient http;
+  http.setConnectTimeout(10000);
+  http.begin("http://localhost:3000/roomLevel");
+  http.addHeader("Content-Type", "application/json");
+  int httpCode = http.POST(bodyString);
+  (httpCode > 0 && httpCode == 200)
+      ? Serial.print("data send")
+      : Serial.print("data send failed");
+  http.end();
+}
